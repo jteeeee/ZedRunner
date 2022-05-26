@@ -5,7 +5,7 @@ import argparse
 import logging.config
 import logging
 from mapper import Mapper
-from zednotification_bot import Notification
+#from zednotification_bot import Notification
 from config import API_RETRY_COUNT
 
 class ZedRun:
@@ -154,6 +154,9 @@ class ZedRun:
         list_address = [d[0] for d in datas]
 
         url = 'https://api.zed.run/api/v1/horses/get_user_horses?public_address={0}&offset={1}&gen\[\]=1&gen\[\]=268&sort_by=created_by_desc'
+        if url == 'https://api.zed.run/api/v1/horses/get_user_horses?public_address=0x8Cc13a9fB2a86aF08E9ffD913dBcE112b8e6f3dc&offset=5&gen\[\]=1&gen\[\]=268&sort_by=created_by_desc':
+            test='None'
+
         for address in list_address:
             self.logger.info(f"Fetching stable information for address {address}")
             offset = 0
@@ -172,9 +175,10 @@ class ZedRun:
                 first_horse = jsondata[0]
 
                 if forced or not self.store.stable_exists(first_horse):
-                    horse_datas = self.mapper.map_horses_data(jsondata)
+                    #horse_datas = self.mapper.map_horses_data(jsondata)
+                    stables_datas = self.mapper.map_stables_data(jsondata)
                     self.logger.info('Store stable information to database.')
-                    self.store.store_stables(horse_datas)
+                    self.store.store_stables(stables_datas)
                     break_loop = False
 
                 if break_loop:
@@ -182,6 +186,7 @@ class ZedRun:
 
 
 def main(type, forced):
+
     logging.config.fileConfig('logging.conf')
     message = f"Zed Run with settings Type:'{type}' and Forced: {forced}"
     logger = logging.getLogger('zedrunner')
@@ -201,13 +206,13 @@ def main(type, forced):
             run.fetch_stable_data(forced)
 
         success_message = message + " completed successfully."
-        Notification.send_message(success_message)
+        #Notification.send_message(success_message)
         logger.info(success_message)
     except Exception as e:       
         failure_message = message + ' failed.'
         stacktrace = traceback.format_exc()
         logger.error(f"Error: {failure_message} Reason: {stacktrace}")
-        Notification.send_message(f"Error: {failure_message} Reason: {stacktrace}")
+        #Notification.send_message(f"Error: {failure_message} Reason: {stacktrace}")
 
 
 
@@ -216,7 +221,10 @@ if __name__ == '__main__':
     # Add arguments to parser
     ap.add_argument("-t","--type", required=True, help="type can be horse, race or stable")
     ap.add_argument('-f', '--force', required=False, help="Force and restore cache")
-    args = vars(ap.parse_args())
+    args={}
+    args['type']='race'
+    args['force']='True'
+    #args = vars(ap.parse_args())
     type = args['type']
     force_string = args['force'] or 'False'
     forced = force_string.lower() in ['true', 't']
